@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>taxmorrow · tm</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0f0e0c; --surface: #161512; --surface2: #1e1c18;
+  --border: #2a2720; --border2: #3a3630;
+  --accent: #c8a96e; --accent2: #e8c98e;
+  --text: #e8e4dc; --text2: #9a9590; --text3: #5a5550;
+  --green: #6db88a; --red: #d4726a; --blue: #6a9fd4; --yellow: #d4b86a;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { overflow-x:hidden; }
+body { font-family:'Instrument Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+/* SIDEBAR */
+.sidebar {
+  width:240px; min-height:100vh;
+  background:var(--surface); border-right:1px solid var(--border);
+  display:flex; flex-direction:column; flex-shrink:0;
+  position:fixed; top:0; left:0; bottom:0; z-index:999;
+}
+.logo-wrap { padding:24px 20px 18px; border-bottom:1px solid var(--border); }
+.logo-mark { font-family:'DM Serif Display',serif; font-size:21px; color:var(--accent); }
+.logo-sub { font-family:'DM Mono',monospace; font-size:9px; color:var(--text3); letter-spacing:2px; text-transform:uppercase; margin-top:2px; }
+.sidebar-overflow { overflow-y:auto; flex:1; }
+.nav-section { padding:14px 10px 6px; }
+.nav-label { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:2px; text-transform:uppercase; color:var(--text3); padding:0 10px; margin-bottom:4px; }
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding:9px 10px; border-radius:8px; cursor:pointer;
+  font-size:13px; color:var(--text2); border:1px solid transparent;
+  transition:all 0.15s; user-select:none;
+}
+.nav-item:hover { background:var(--surface2); color:var(--text); }
+.nav-item.active { background:rgba(200,169,110,0.1); color:var(--accent); border-color:rgba(200,169,110,0.2); }
+.nav-icon { width:18px; text-align:center; font-size:14px; }
+.nav-badge {
+  margin-left:auto; font-size:10px; font-family:'DM Mono',monospace;
+  padding:1px 6px; border-radius:10px; background:var(--red); color:#fff;
+}
+.nav-badge.g { background:var(--green); }
+.nav-badge.y { background:var(--yellow); color:#111; }
+.sidebar-foot { padding:14px 10px; border-top:1px solid var(--border); }
+.user-chip { display:flex; align-items:center; gap:10px; padding:8px 10px; border-radius:8px; }
+.user-av {
+  width:28px; height:28px; border-radius:50%;
+  background:linear-gradient(135deg,var(--accent),#a07840);
+  display:flex; align-items:center; justify-content:center;
+  font-size:11px; font-weight:600; color:#111; font-family:'DM Serif Display',serif; flex-shrink:0;
+}
+.user-name { font-size:13px; font-weight:500; }
+.user-role { font-size:10px; color:var(--text3); font-family:'DM Mono',monospace; }
+
+/* MAIN */
+.main { margin-left:240px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+.topbar {
+  padding:18px 28px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; gap:14px; background:var(--bg);
+  position:sticky; top:0; z-index:100;
+}
+.page-title { font-family:'DM Serif Display',serif; font-size:19px; flex:1; }
+.topbar-date { font-family:'DM Mono',monospace; font-size:11px; color:var(--text3); }
+.btn { padding:7px 14px; border-radius:8px; font-size:12.5px; font-family:'Instrument Sans',sans-serif; font-weight:500; cursor:pointer; border:1px solid transparent; transition:all 0.15s; }
+.btn-p { background:var(--accent); color:#111; border-color:var(--accent); }
+.btn-p:hover { background:var(--accent2); }
+.btn-g { background:transparent; color:var(--text2); border-color:var(--border2); }
+.btn-g:hover { background:var(--surface2); color:var(--text); }
+.tm-chip { display:inline-flex; align-items:center; gap:6px; background:rgba(200,169,110,0.08); border:1px solid rgba(200,169,110,0.2); border-radius:6px; padding:4px 10px; font-family:'DM Mono',monospace; font-size:10px; color:var(--accent); }
+.tm-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+.content { padding:24px 28px; flex:1; }
+.view { display:none; }
+.view.active { display:block; animation:fadeIn 0.18s ease; }
+@keyframes fadeIn { from{opacity:0;transform:translateY(3px)} to{opacity:1;transform:translateY(0)} }
+
+/* CARDS & LAYOUT */
+.card { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.card-h { padding:14px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between; }
+.card-title { font-family:'DM Serif Display',serif; font-size:14px; }
+.card-act { font-size:11px; color:var(--accent); cursor:pointer; font-family:'DM Mono',monospace; }
+.section-hd { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; }
+.section-title { font-family:'DM Serif Display',serif; font-size:21px; }
+.section-sub { font-size:11px; color:var(--text3); margin-top:2px; font-family:'DM Mono',monospace; }
+.two-col { display:grid; grid-template-columns:1.4fr 1fr; gap:18px; }
+.grid4 { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:24px; }
+.tm-info { background:linear-gradient(135deg,rgba(200,169,110,0.07),rgba(200,169,110,0.02)); border:1px solid rgba(200,169,110,0.2); border-radius:10px; padding:12px 16px; margin-bottom:18px; display:flex; align-items:center; gap:12px; font-size:12.5px; color:var(--text2); }
+.tm-info strong { color:var(--accent); }
+
+/* STAT CARDS */
+.stat-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:18px; position:relative; overflow:hidden; }
+.stat-card::before { content:''; position:absolute; top:0;left:0;right:0; height:2px; background:var(--accent); opacity:0.4; }
+.stat-card.r::before { background:var(--red); } .stat-card.g::before { background:var(--green); } .stat-card.b::before { background:var(--blue); }
+.stat-label { font-family:'DM Mono',monospace; font-size:9.5px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); margin-bottom:8px; }
+.stat-val { font-family:'DM Serif Display',serif; font-size:30px; }
+.stat-delta { font-size:11px; color:var(--text3); margin-top:4px; font-family:'DM Mono',monospace; }
+.stat-delta .gn { color:var(--green); } .stat-delta .rd { color:var(--red); }
+
+/* PILLS */
+.pill { display:inline-block; padding:2px 8px; border-radius:10px; font-size:10.5px; font-family:'DM Mono',monospace; }
+.pill-r { background:rgba(212,114,106,0.12); color:var(--red); }
+.pill-g { background:rgba(109,184,138,0.12); color:var(--green); }
+.pill-y { background:rgba(212,184,106,0.12); color:var(--yellow); }
+.pill-b { background:rgba(106,159,212,0.12); color:var(--blue); }
+
+/* FRIST */
+.frist-item { padding:11px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:11px; cursor:pointer; transition:background 0.1s; }
+.frist-item:hover { background:var(--surface2); }
+.frist-item:last-child { border-bottom:none; }
+.fdot { width:7px; height:7px; border-radius:50%; flex-shrink:0; }
+.fdot-r { background:var(--red); box-shadow:0 0 5px rgba(212,114,106,0.5); }
+.fdot-y { background:var(--yellow); }
+.fdot-g { background:var(--green); }
+.frist-name { font-size:12.5px; flex:1; }
+.frist-m { font-size:10.5px; color:var(--text3); }
+.frist-date { font-family:'DM Mono',monospace; font-size:11px; color:var(--text2); }
+.fdays { font-family:'DM Mono',monospace; font-size:10px; padding:2px 6px; border-radius:4px; }
+.fdays-r { background:rgba(212,114,106,0.15); color:var(--red); }
+.fdays-y { background:rgba(212,184,106,0.12); color:var(--yellow); }
+.fdays-g { background:rgba(109,184,138,0.12); color:var(--green); }
+
+/* ACTIVITY */
+.act-item { padding:11px 18px; border-bottom:1px solid var(--border); display:flex; gap:11px; }
+.act-item:last-child { border-bottom:none; }
+.act-icon { width:26px; height:26px; border-radius:6px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:12px; flex-shrink:0; margin-top:1px; }
+.act-text { font-size:12px; color:var(--text2); line-height:1.5; }
+.act-text strong { color:var(--text); font-weight:500; }
+.act-time { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); margin-top:2px; }
+
+/* TABLE */
+.table-wrap { overflow-x:auto; }
+table { width:100%; border-collapse:collapse; }
+th { font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); padding:11px 14px; text-align:left; border-bottom:1px solid var(--border); white-space:nowrap; }
+td { padding:10px 14px; font-size:12.5px; border-bottom:1px solid var(--border); color:var(--text2); }
+tr:last-child td { border-bottom:none; }
+tr:hover td { background:var(--surface2); }
+td.nm { color:var(--text); font-weight:500; }
+
+/* FILTER TABS */
+.ftabs { display:flex; gap:3px; margin-bottom:18px; padding:3px; background:var(--surface); border-radius:9px; border:1px solid var(--border); width:fit-content; }
+.ftab { padding:5px 13px; border-radius:7px; font-size:12px; cursor:pointer; color:var(--text3); transition:all 0.12s; }
+.ftab.active { background:var(--surface2); color:var(--text); border:1px solid var(--border2); }
+
+/* FORM */
+.fgrid { display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:18px; }
+.fg { display:flex; flex-direction:column; gap:5px; }
+.fg.full { grid-column:1/-1; }
+label { font-family:'DM Mono',monospace; font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text3); }
+input,select,textarea { background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:8px 11px; font-size:12.5px; font-family:'Instrument Sans',sans-serif; color:var(--text); outline:none; transition:border-color 0.15s; width:100%; }
+input:focus,select:focus,textarea:focus { border-color:var(--accent); }
+textarea { resize:vertical; min-height:70px; }
+.fsection { font-family:'DM Serif Display',serif; font-size:13px; color:var(--accent); margin:18px 0 12px; padding-bottom:6px; border-bottom:1px solid var(--border); }
+
+/* STEUER CARDS */
+.st-card { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:16px 18px; display:flex; align-items:flex-start; gap:12px; cursor:pointer; transition:all 0.15s; margin-bottom:9px; }
+.st-card:hover { border-color:var(--border2); background:var(--surface2); }
+.st-icon { width:40px; height:40px; border-radius:9px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:17px; flex-shrink:0; border:1px solid var(--border); }
+.st-name { font-size:13px; font-weight:600; color:var(--text); }
+.st-m { font-size:11px; color:var(--text3); margin-top:1px; font-family:'DM Mono',monospace; }
+.st-r { text-align:right; }
+.st-year { font-family:'DM Serif Display',serif; font-size:19px; color:var(--accent); }
+.st-due { font-size:10.5px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:1px; }
+.step-bar { display:flex; gap:3px; margin-top:7px; }
+.step { height:3px; flex:1; border-radius:2px; background:var(--surface2); border:1px solid var(--border); }
+.step.done { background:var(--green); border-color:var(--green); }
+.step.cur { background:var(--accent); border-color:var(--accent); }
+
+/* CHECKLIST */
+.ck-item { display:flex; align-items:flex-start; gap:10px; padding:8px 0; border-bottom:1px solid var(--border); cursor:pointer; }
+.ck-item:last-child { border-bottom:none; }
+.cbox { width:15px; height:15px; border-radius:4px; border:1.5px solid var(--border2); flex-shrink:0; margin-top:1px; display:flex; align-items:center; justify-content:center; transition:all 0.12s; }
+.cbox.on { background:var(--accent); border-color:var(--accent); }
+.cbox.on::after { content:'✓'; font-size:9px; color:#111; }
+.ck-label { font-size:12.5px; flex:1; }
+.ck-label.done { text-decoration:line-through; color:var(--text3); }
+.ck-tag { font-family:'DM Mono',monospace; font-size:9.5px; color:var(--text3); padding:2px 6px; border-radius:4px; border:1px solid var(--border2); }
+.prog-bar { height:3px; background:var(--surface2); border-radius:2px; overflow:hidden; margin-bottom:12px; }
+.prog-fill { height:100%; background:var(--accent); border-radius:2px; }
+
+/* POST */
+.post-item { padding:13px 18px; border-bottom:1px solid var(--border); display:flex; gap:12px; cursor:pointer; transition:background 0.1s; }
+.post-item:hover { background:var(--surface2); }
+.post-item.unread { background:rgba(200,169,110,0.02); }
+.post-item:last-child { border-bottom:none; }
+.post-icon { width:34px; height:34px; border-radius:8px; background:var(--surface2); display:flex; align-items:center; justify-content:center; font-size:15px; flex-shrink:0; }
+.post-from { font-size:12.5px; font-weight:600; color:var(--text); margin-bottom:2px; }
+.post-from.r { font-weight:400; color:var(--text2); }
+.post-sub { font-size:12px; color:var(--text2); margin-bottom:2px; }
+.post-prev { font-size:11px; color:var(--text3); }
+.post-meta { margin-left:auto; text-align:right; flex-shrink:0; }
+.post-time { font-family:'DM Mono',monospace; font-size:10px; color:var(--text3); }
+.post-dot { width:6px; height:6px; border-radius:50%; background:var(--accent); margin:5px auto 0; }
+
+/* BESCHEID */
+.bs-grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px; }
+.bs-sel { display:flex; gap:10px; margin-bottom:18px; flex-wrap:wrap; }
+.bs-card { flex:1; min-width:180px; background:var(--surface); border:1.5px solid var(--border); border-radius:10px; padding:13px 16px; cursor:pointer; transition:all 0.15s; }
+.bs-card.active { border-color:var(--accent); background:rgba(200,169,110,0.05); }
+.bs-card:hover { border-color:var(--border2); }
+.bs-name { font-size:13px; font-weight:600; color:var(--text); }
+.bs-sub { font-size:10.5px; color:var(--text3); font-family:'DM Mono',monospace; margin-top:2px; }
+.delta-box { background:rgba(212,114,106,0.06); border:1px solid rgba(212,114,106,0.22); border-radius:10px; padding:16px 20px; display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; }
+.delta-box.ok { background:rgba(109,184,138,0.05); border-color:rgba(109,184,138,0.2); }
+.delta-val { font-family:'DM Serif Display',serif; font-size:26px; color:var(--red); }
+.delta-val.ok { color:var(--green); }
+.vgl-row { display:grid; grid-template-columns:1fr 90px 90px 80px; gap:6px; align-items:center; padding:8px 0; border-bottom:1px solid var(--border); font-size:12.5px; }
+.vgl-row:last-child { border-bottom:none; }
+.vgl-row.hd { font-family:'DM Mono',monospace; font-size:9px; color:var(--text3); text-transform:uppercase; letter-spacing:1px; padding-bottom:6px; }
+.mono { font-family:'DM Mono',monospace; font-size:12px; text-align:right; }
+.diff-b { display:inline-block; padding:1px 7px; border-radius:4px; font-family:'DM Mono',monospace; font-size:10.5px; }
+.diff-r { background:rgba(212,114,106,0.15); color:var(--red); }
+.diff-g { background:rgba(109,184,138,0.12); color:var(--green); }
+.diff-0 { background:rgba(109,184,138,0.1); color:var(--green); }
+.analyse-box { background:rgba(212,114,106,0.06); border:1px solid rgba(212,114,106,0.18); border-radius:8px; padding:11px 14px; margin-bottom:9px; }
+.analyse-box.ok { background:rgba(200,169,110,0.05); border-color:rgba(200,169,110,0.15); }
+.analyse-lbl { font-family:'DM Mono',monospace; font-size:9px; color:var(--red); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+.analyse-lbl.ok { color:var(--accent); }
+.analyse-text { font-size:12px; color:var(--text2); line-height:1.6; }
+.einspruch-wrap { background:linear-gradient(135deg,rgba(212,114,106,0.05),rgba(212,114,106,0.01)); border:1px solid rgba(212,114,106,0.22); border-radius:12px; padding:18px 22px; margin-top:18px; }
+.einspruch-title { font-family:'DM Serif Display',serif; font-size:15px; color:var(--red); margin-bottom:10px; display:flex; align-items:center; gap:8px; }
+.rg-list { display:flex; flex-wrap:wrap; gap:5px; margin-bottom:12px; }
+.rg { font-family:'DM Mono',monospace; font-size:9.5px; padding:2px 8px; border-radius:4px; background:rgba(106,159,212,0.1); color:var(--blue); border:1px solid rgba(106,159,212,0.18); }
+.einspruch-text { font-family:'DM Mono',monospace; font-size:11px; color:var(--text2); background:var(--surface2); border:1px solid var(--border2); border-radius:8px; padding:14px; white-space:pre-wrap; line-height:1.7; }
+
+/* BERATER */
+.berater-wrap { display:grid; grid-template-columns:260px 1fr; gap:18px; height:calc(100vh - 190px); }
+.b-left { display:flex; flex-direction:column; gap:12px; overflow-y:auto; }
+.b-panel { background:var(--surface); border:1px solid var(--border); border-radius:12px; overflow:hidden; }
+.b-panel-h { padding:10px 14px; border-bottom:1px solid var(--border); font-family:'DM Mono',monospace; font-size:9px; letter-spacing:1.5px; text-transform:uppercase; color:var(--text3); }
+.mp-item { padding:9px 14px; cursor:pointer; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:9px; transition:background 0.1s; font-size:12.5px; color:var(--text2); }
+.mp-item:last-child { border-bottom:none; }
+.mp-item:hover { background:var(--surface2); color:var(--text); }
+.mp-item.on { background:rgba(200,169,110,0.07); color:var(--accent); }
+.mp-dot { width:6px; height:6px; border-radius:50%; background:var(--border2); flex-shrink:0; }
+.mp-item.on .mp-dot { background:var(--accent); }
+.ft-item { padding:8px 14px; cursor:pointer; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:8px; transition:background 0.1s; font-size:12.5px; color:var(--text2); }
+.ft-item:last-child { border-bottom:none; }
+.ft-item:hover { background:var(--surface2); color:var(--text); }
+.ft-item.on { background:rgba(200,169,110,0.06); color:var(--accent); }
+.sd-box { background:var(--surface); border:1px solid var(--border); border-radius:12px; padding:12px 14px; font-size:11.5px; }
+.sd-title { font-family:'DM Mono',monospace; font-size:9px; text-transform:uppercase; letter-spacing:1.5px; color:var(--text3); margin-bottom:8px; display:block; }
+.sd-row { display:flex; justify-content:space-between; padding:4px 0; border-bottom:1px solid var(--border); }
+.sd-row:last-child { border-bottom:none; }
+.sd-k { color:var(--text3); }
+.sd-v { color:var(--text2); font-family:'DM Mono',monospace; font-size:10.5px; }
+
+/* CHAT */
+.chat-wrap { background:var(--surface); border:1px solid var(--border); border-radius:12px; display:flex; flex-direction:column; overflow:hidden; }
+.chat-h { padding:13px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.chat-title { font-family:'DM Serif Display',serif; font-size:14px; }
+.chat-msgs { flex:1; overflow-y:auto; padding:18px; display:flex; flex-direction:column; gap:14px; }
+.cmsg { display:flex; gap:9px; max-width:88%; }
+.cmsg.u { align-self:flex-end; flex-direction:row-reverse; }
+.cav { width:26px; height:26px; border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; flex-shrink:0; margin-top:2px; }
+.cav-tm { background:linear-gradient(135deg,var(--accent),#a07840); color:#111; font-family:'DM Serif Display',serif; }
+.cav-u { background:var(--surface2); border:1px solid var(--border2); }
+.cbubble { background:var(--surface2); border:1px solid var(--border); border-radius:10px; padding:10px 13px; font-size:12.5px; line-height:1.6; color:var(--text2); }
+.cmsg.u .cbubble { background:rgba(200,169,110,0.07); border-color:rgba(200,169,110,0.18); color:var(--text); }
+.cbubble strong { color:var(--text); }
+.chat-fall { font-family:'DM Mono',monospace; font-size:9.5px; letter-spacing:1px; text-transform:uppercase; color:var(--text3); padding:0 18px 8px; }
+.qprompts { display:flex; flex-wrap:wrap; gap:5px; padding:0 14px 10px; }
+.qp { font-size:11px; padding:4px 9px; border-radius:6px; border:1px solid var(--border2); color:var(--text3); cursor:pointer; transition:all 0.12s; background:transparent; font-family:'Instrument Sans',sans-serif; }
+.qp:hover { border-color:var(--accent); color:var(--accent); background:rgba(200,169,110,0.04); }
+.chat-in { padding:12px 14px; border-top:1px solid var(--border); display:flex; gap:9px; align-items:flex-end; }
+.chat-textarea { flex:1; background:var(--surface2); border:1px solid var(--border2); border-radius:9px; padding:9px 12px; font-size:12.5px; font-family:'Instrument Sans',sans-serif; color:var(--text); outline:none; resize:none; min-height:40px; max-height:110px; line-height:1.5; }
+.chat-textarea:focus { border-color:var(--accent); }
+.send-btn { width:38px; height:38px; border-radius:9px; background:var(--accent); border:none; cursor:pointer; font-size:15px; display:flex; align-items:center; justify-content:center; flex-shrink:0; transition:background 0.15s; color:#111; }
+.send-btn:hover { background:var(--accent2); }
+.send-btn:disabled { opacity:0.4; cursor:not-allowed; }
+.tdot { width:6px; height:6px; border-radius:50%; background:var(--accent); opacity:0.4; animation:tb 1.2s infinite; display:inline-block; margin:0 2px; }
+.tdot:nth-child(2){animation-delay:.2s} .tdot:nth-child(3){animation-delay:.4s}
+@keyframes tb { 0%,60%,100%{transform:translateY(0);opacity:.4} 30%{transform:translateY(-4px);opacity:1} }
+</style>
+</head>
+<body>
+
+<nav class="sidebar">
+  <div class="logo-wrap">
+    <div class="logo-mark">taxmorrow</div>
+    <div class="logo-sub">Kanzlei · System</div>
+  </div>
+  <div class="sidebar-overflow">
+    <div class="nav-section">
+      <div class="nav-label">Übersicht</div>
+      <div class="nav-item active" onclick="go('dashboard',this)"><span class="nav-icon">◈</span>Dashboard</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Mandanten</div>
+      <div class="nav-item" onclick="go('mandanten',this)"><span class="nav-icon">👤</span>Alle Mandanten</div>
+      <div class="nav-item" onclick="go('aufnahme',this)"><span class="nav-icon">✦</span>Neuaufnahme<span class="nav-badge g">tm</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Prozesse</div>
+      <div class="nav-item" onclick="go('steuer',this)"><span class="nav-icon">📋</span>Steuererklärungen<span class="nav-badge">5</span></div>
+      <div class="nav-item" onclick="go('checklisten',this)"><span class="nav-icon">☑</span>Checklisten<span class="nav-badge g">tm</span></div>
+      <div class="nav-item" onclick="go('fristen',this)"><span class="nav-icon">⏱</span>Fristen<span class="nav-badge">3</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Analyse</div>
+      <div class="nav-item" onclick="go('bescheid',this)"><span class="nav-icon">🔍</span>Bescheidprüfung<span class="nav-badge">2</span></div>
+      <div class="nav-item" onclick="go('berater',this)"><span class="nav-icon">✦</span>tm Berater<span class="nav-badge g">KI</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Kommunikation</div>
+      <div class="nav-item" onclick="go('posteingang',this)"><span class="nav-icon">✉</span>Posteingang<span class="nav-badge">7</span></div>
+    </div>
+  </div>
+  <div class="sidebar-foot">
+    <div class="user-chip">
+      <div class="user-av">TM</div>
+      <div><div class="user-name">taxmorrow</div><div class="user-role">Steuerberatung</div></div>
+    </div>
+  </div>
+</nav>
+
+<div class="main">
+  <div class="topbar">
+    <div class="page-title" id="pageTitle">Dashboard</div>
+    <div class="tm-chip"><div class="tm-dot"></div>tm aktiv</div>
+    <div class="topbar-date" id="topDate"></div>
+    <button class="btn btn-g">⚙ Einstellungen</button>
+    <button class="btn btn-p" onclick="go('aufnahme',null)">+ Mandant</button>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="view active" id="view-dashboard">
+      <div class="tm-info"><span style="font-size:18px">✦</span><span><strong>taxmorrow</strong> hat heute 3 Fristen erkannt, 2 Mandantenanfragen vorbereitet und 5 Dokumente strukturiert.</span></div>
+      <div class="grid4">
+        <div class="stat-card"><div class="stat-label">Mandanten</div><div class="stat-val">142</div><div class="stat-delta">+<span class="gn">4</span> diesen Monat</div></div>
+        <div class="stat-card r"><div class="stat-label">Offene Fristen</div><div class="stat-val">8</div><div class="stat-delta"><span class="rd">3</span> kritisch</div></div>
+        <div class="stat-card g"><div class="stat-label">Steuererklärungen</div><div class="stat-val">23</div><div class="stat-delta"><span class="gn">11</span> abgeschlossen</div></div>
+        <div class="stat-card b"><div class="stat-label">Posteingang</div><div class="stat-val">7</div><div class="stat-delta">ungelesen</div></div>
+      </div>
+      <div class="two-col">
+        <div class="card">
+          <div class="card-h"><div class="card-title">Nächste Fristen</div><div class="card-act" onclick="go('fristen',null)">Alle →</div></div>
+          <div class="frist-item"><div class="fdot fdot-r"></div><div><div class="frist-name">ESt-Erklärung 2023</div><div class="frist-m">Müller, Hans-Peter</div></div><div class="frist-date">31.03.2026</div><span class="fdays fdays-r">−2 Tage</span></div>
+          <div class="frist-item"><div class="fdot fdot-r"></div><div><div class="frist-name">UStVA Februar</div><div class="frist-m">Schmidt GmbH</div></div><div class="frist-date">10.04.2026</div><span class="fdays fdays-r">+23 Tage</span></div>
+          <div class="frist-item"><div class="fdot fdot-y"></div><div><div class="frist-name">KSt-Erklärung 2023</div><div class="frist-m">Bauer & Partner KG</div></div><div class="frist-date">31.05.2026</div><span class="fdays fdays-y">+74 Tage</span></div>
+          <div class="frist-item"><div class="fdot fdot-g"></div><div><div class="frist-name">Jahresabschluss 2023</div><div class="frist-m">Weber Immobilien</div></div><div class="frist-date">30.06.2026</div><span class="fdays fdays-g">+104 Tage</span></div>
+        </div>
+        <div class="card">
+          <div class="card-h"><div class="card-title">Letzte Aktivitäten</div></div>
+          <div class="act-item"><div class="act-icon">✦</div><div><div class="act-text"><strong>tm</strong> hat Checkliste für Müller vorbereitet</div><div class="act-time">vor 12 Min.</div></div></div>
+          <div class="act-item"><div class="act-icon">📄</div><div><div class="act-text">ESt-Erklärung für <strong>Weber</strong> angelegt</div><div class="act-time">vor 45 Min.</div></div></div>
+          <div class="act-item"><div class="act-icon">✉</div><div><div class="act-text"><strong>Schmidt GmbH</strong> hat Belege hochgeladen</div><div class="act-time">vor 1 Std.</div></div></div>
+          <div class="act-item"><div class="act-icon">⏱</div><div><div class="act-text"><strong>tm</strong> erinnert: Frist in 2 Tagen — Müller</div><div class="act-time">vor 2 Std.</div></div></div>
+          <div class="act-item"><div class="act-icon">👤</div><div><div class="act-text">Neuer Mandant <strong>Fischer, Eva</strong> aufgenommen</div><div class="act-time">gestern</div></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MANDANTEN -->
+    <div class="view" id="view-mandanten">
+      <div class="section-hd"><div><div class="section-title">Mandanten</div><div class="section-sub">142 aktive Mandate</div></div><div style="display:flex;gap:10px"><button class="btn btn-p" onclick="go('aufnahme',null)">+ Neu</button></div></div>
+      <div class="ftabs"><div class="ftab active">Alle</div><div class="ftab">Privat</div><div class="ftab">Unternehmen</div><div class="ftab">Archiv</div></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th>Name</th><th>Typ</th><th>Steuer-ID</th><th>Sachbearbeiter</th><th>Nächste Frist</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td class="nm">Müller, Hans-Peter</td><td>Privat</td><td style="font-family:'DM Mono',monospace;font-size:11px">43 892 751 839</td><td>K. Hoffmann</td><td style="color:var(--red)">31.03.2026</td><td><span class="pill pill-r">Dringend</span></td></tr>
+          <tr><td class="nm">Schmidt GmbH</td><td>GmbH</td><td style="font-family:'DM Mono',monospace;font-size:11px">DE 234 891 002</td><td>M. Brandt</td><td>10.04.2026</td><td><span class="pill pill-y">In Bearbeitung</span></td></tr>
+          <tr><td class="nm">Bauer & Partner KG</td><td>KG</td><td style="font-family:'DM Mono',monospace;font-size:11px">DE 109 334 781</td><td>K. Hoffmann</td><td>31.05.2026</td><td><span class="pill pill-b">Wartend</span></td></tr>
+          <tr><td class="nm">Weber Immobilien</td><td>GmbH & Co. KG</td><td style="font-family:'DM Mono',monospace;font-size:11px">DE 445 221 907</td><td>M. Brandt</td><td>30.06.2026</td><td><span class="pill pill-g">Aktuell</span></td></tr>
+          <tr><td class="nm">Fischer, Eva</td><td>Privat</td><td style="font-family:'DM Mono',monospace;font-size:11px">12 334 002 891</td><td>M. Brandt</td><td>31.07.2026</td><td><span class="pill pill-b">Neu</span></td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+
+    <!-- NEUAUFNAHME -->
+    <div class="view" id="view-aufnahme">
+      <div class="section-hd"><div><div class="section-title">Mandantenaufnahme</div><div class="section-sub">Neues Mandat anlegen</div></div><div class="tm-chip"><div class="tm-dot"></div>tm befrägt automatisch</div></div>
+      <div class="tm-info"><span style="font-size:18px">✦</span><span><strong>taxmorrow</strong> bereitet die Mandantenbefragung vor und strukturiert die erfassten Daten automatisch.</span></div>
+      <div class="card" style="padding:22px 26px">
+        <div class="fsection">Persönliche Daten</div>
+        <div class="fgrid">
+          <div class="fg"><label>Anrede</label><select><option>Herr</option><option>Frau</option><option>Firma</option></select></div>
+          <div class="fg"><label>Mandantenart</label><select><option>Privatperson</option><option>GmbH</option><option>GmbH & Co. KG</option><option>KG</option><option>OHG</option><option>GbR</option></select></div>
+          <div class="fg"><label>Vorname</label><input type="text" placeholder="Max"></div>
+          <div class="fg"><label>Nachname / Firma</label><input type="text" placeholder="Mustermann"></div>
+          <div class="fg"><label>Geburtsdatum</label><input type="date"></div>
+          <div class="fg"><label>Steuer-ID</label><input type="text" placeholder="00 000 000 000"></div>
+        </div>
+        <div class="fsection">Kontakt & Anschrift</div>
+        <div class="fgrid">
+          <div class="fg full"><label>Straße und Hausnummer</label><input type="text" placeholder="Musterstraße 12"></div>
+          <div class="fg"><label>PLZ</label><input type="text" placeholder="80331"></div>
+          <div class="fg"><label>Ort</label><input type="text" placeholder="München"></div>
+          <div class="fg"><label>Telefon</label><input type="text" placeholder="+49 89 123456"></div>
+          <div class="fg"><label>E-Mail</label><input type="email" placeholder="max@beispiel.de"></div>
+        </div>
+        <div class="fsection">Steuerliche Informationen</div>
+        <div class="fgrid">
+          <div class="fg"><label>Finanzamt</label><input type="text" placeholder="München I"></div>
+          <div class="fg"><label>Steuernummer</label><input type="text" placeholder="123/456/78901"></div>
+          <div class="fg"><label>Sachbearbeiter</label><select><option>K. Hoffmann</option><option>M. Brandt</option></select></div>
+          <div class="fg"><label>Leistungsumfang</label><select><option>ESt-Erklärung</option><option>Vollmandat</option><option>Nur Lohnbuchhaltung</option></select></div>
+          <div class="fg full"><label>Notizen</label><textarea placeholder="Freie Notizen — taxmorrow erkennt und kategorisiert automatisch…"></textarea></div>
+        </div>
+        <div style="display:flex;gap:10px;margin-top:6px">
+          <button class="btn btn-p">✦ Mandant anlegen</button>
+          <button class="btn btn-g">Checkliste generieren</button>
+          <button class="btn btn-g">Abbrechen</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- STEUERERKLÄRUNGEN -->
+    <div class="view" id="view-steuer">
+      <div class="section-hd"><div><div class="section-title">Steuererklärungen</div><div class="section-sub">Veranlagungszeitraum 2023</div></div><button class="btn btn-p">+ Neue ESt</button></div>
+      <div class="ftabs"><div class="ftab active">Alle (23)</div><div class="ftab">Offen (12)</div><div class="ftab">In Arbeit (5)</div><div class="ftab">Geprüft (4)</div><div class="ftab">Eingereicht (2)</div></div>
+      <div class="st-card"><div class="st-icon">👤</div><div style="flex:1"><div class="st-name">Einkommensteuer</div><div class="st-m">Müller, Hans-Peter · 43 892 751 839</div><div class="step-bar"><div class="step done"></div><div class="step done"></div><div class="step cur"></div><div class="step"></div><div class="step"></div></div></div><div class="st-r"><div class="st-year">2023</div><div class="st-due">Fällig 31.03.2026</div><span class="pill pill-r" style="margin-top:6px;display:inline-block">Dringend</span></div></div>
+      <div class="st-card"><div class="st-icon">🏢</div><div style="flex:1"><div class="st-name">Körperschaftsteuer</div><div class="st-m">Schmidt GmbH · DE 234 891 002</div><div class="step-bar"><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step cur"></div><div class="step"></div></div></div><div class="st-r"><div class="st-year">2023</div><div class="st-due">Fällig 31.07.2026</div><span class="pill pill-y" style="margin-top:6px;display:inline-block">In Arbeit</span></div></div>
+      <div class="st-card"><div class="st-icon">🤝</div><div style="flex:1"><div class="st-name">Gewerbesteuer + KSt</div><div class="st-m">Bauer & Partner KG · DE 109 334 781</div><div class="step-bar"><div class="step done"></div><div class="step cur"></div><div class="step"></div><div class="step"></div><div class="step"></div></div></div><div class="st-r"><div class="st-year">2023</div><div class="st-due">Fällig 31.05.2026</div><span class="pill pill-b" style="margin-top:6px;display:inline-block">Belege fehlen</span></div></div>
+      <div class="st-card"><div class="st-icon">🏠</div><div style="flex:1"><div class="st-name">Einkommensteuer + Anlage V</div><div class="st-m">Weber Immobilien · DE 445 221 907</div><div class="step-bar"><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step done"></div><div class="step cur"></div></div></div><div class="st-r"><div class="st-year">2023</div><div class="st-due">Fällig 30.06.2026</div><span class="pill pill-g" style="margin-top:6px;display:inline-block">Geprüft</span></div></div>
+    </div>
+
+    <!-- CHECKLISTEN -->
+    <div class="view" id="view-checklisten">
+      <div class="section-hd"><div><div class="section-title">Checklisten</div><div class="section-sub">Von tm vorbereitet</div></div><div class="tm-chip"><div class="tm-dot"></div>tm generiert</div></div>
+      <div class="two-col">
+        <div class="card" style="padding:18px 22px">
+          <div style="font-family:'DM Serif Display',serif;font-size:15px;margin-bottom:4px">ESt 2023 — Müller <span class="pill pill-r" style="font-size:10px">Dringend</span></div>
+          <div class="prog-bar" style="margin-top:10px"><div class="prog-fill" style="width:40%"></div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Personalien geprüft</div><div class="ck-tag">Stamm</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Lohnsteuerbescheinigung erhalten</div><div class="ck-tag">Belege</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Anlage N ausfüllen</div><div class="ck-tag">ESt</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Werbungskosten erfassen</div><div class="ck-tag">ESt</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Sonderausgaben prüfen</div><div class="ck-tag">ESt</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Mandant zur Freigabe kontaktieren</div><div class="ck-tag">Komm.</div></div>
+          <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Elektronisch übermitteln (ELSTER)</div><div class="ck-tag">Einr.</div></div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <div class="card" style="padding:16px 20px">
+            <div style="font-family:'DM Serif Display',serif;font-size:14px;margin-bottom:8px">Mandantenaufnahme — Fischer</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:70%"></div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Kontaktdaten erfasst</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Vollmacht unterzeichnet</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">DSGVO-Einwilligung</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Vorjahresbescheid angefordert</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Erstgespräch terminieren</div></div>
+          </div>
+          <div class="card" style="padding:16px 20px">
+            <div style="font-family:'DM Serif Display',serif;font-size:14px;margin-bottom:8px">UStVA Februar — Schmidt GmbH</div>
+            <div class="prog-bar"><div class="prog-fill" style="width:85%;background:var(--green)"></div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Buchungen abgestimmt</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Voranmeldung erstellt</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox on"></div><div class="ck-label done">Zahllast geprüft</div></div>
+            <div class="ck-item" onclick="ck(this)"><div class="cbox"></div><div class="ck-label">Übermittlung ELSTER</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FRISTEN -->
+    <div class="view" id="view-fristen">
+      <div class="section-hd"><div><div class="section-title">Fristenüberwachung</div><div class="section-sub">8 aktive Fristen · 3 kritisch</div></div><div style="display:flex;gap:10px"><div class="tm-chip"><div class="tm-dot"></div>tm überwacht</div><button class="btn btn-p">+ Frist</button></div></div>
+      <div class="ftabs"><div class="ftab active">Alle</div><div class="ftab">Kritisch</div><div class="ftab">Diese Woche</div><div class="ftab">Diesen Monat</div></div>
+      <div class="card"><div class="table-wrap"><table>
+        <thead><tr><th></th><th>Aufgabe</th><th>Mandant</th><th>Typ</th><th>Fällig am</th><th>Verbleibend</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><span class="fdot fdot-r" style="display:inline-block"></span></td><td class="nm">ESt-Erklärung 2023</td><td>Müller, Hans-Peter</td><td>Steuererklärung</td><td style="font-family:'DM Mono',monospace;font-size:11px;color:var(--red)">31.03.2026</td><td><span class="fdays fdays-r">−2 Tage</span></td><td><span class="pill pill-r">Kritisch</span></td></tr>
+          <tr><td><span class="fdot fdot-r" style="display:inline-block"></span></td><td class="nm">Lohnsteuer-Anmeldung März</td><td>Schmidt GmbH</td><td>Lohn</td><td style="font-family:'DM Mono',monospace;font-size:11px">10.04.2026</td><td><span class="fdays fdays-r">+23 Tage</span></td><td><span class="pill pill-y">Offen</span></td></tr>
+          <tr><td><span class="fdot fdot-y" style="display:inline-block"></span></td><td class="nm">UStVA Februar</td><td>Schmidt GmbH</td><td>Umsatzsteuer</td><td style="font-family:'DM Mono',monospace;font-size:11px">10.04.2026</td><td><span class="fdays fdays-y">+23 Tage</span></td><td><span class="pill pill-y">In Arbeit</span></td></tr>
+          <tr><td><span class="fdot fdot-y" style="display:inline-block"></span></td><td class="nm">KSt-Erklärung 2023</td><td>Bauer & Partner KG</td><td>Steuererklärung</td><td style="font-family:'DM Mono',monospace;font-size:11px">31.05.2026</td><td><span class="fdays fdays-y">+74 Tage</span></td><td><span class="pill pill-b">Wartend</span></td></tr>
+          <tr><td><span class="fdot fdot-g" style="display:inline-block"></span></td><td class="nm">Jahresabschluss 2023</td><td>Weber Immobilien</td><td>Jahresabschluss</td><td style="font-family:'DM Mono',monospace;font-size:11px">30.06.2026</td><td><span class="fdays fdays-g">+104 Tage</span></td><td><span class="pill pill-g">Aktuell</span></td></tr>
+          <tr><td><span class="fdot fdot-g" style="display:inline-block"></span></td><td class="nm">ESt-Erklärung 2023</td><td>Fischer, Eva</td><td>Steuererklärung</td><td style="font-family:'DM Mono',monospace;font-size:11px">31.07.2026</td><td><span class="fdays fdays-g">+135 Tage</span></td><td><span class="pill pill-g">Geplant</span></td></tr>
+        </tbody>
+      </table></div></div>
+    </div>
+
+    <!-- BESCHEIDPRÜFUNG -->
+    <div class="view" id="view-bescheid">
+      <div class="section-hd"><div><div class="section-title">Bescheidprüfung</div><div class="section-sub">Abgleich Steuererklärung vs. Bescheid · Einspruchsempfehlung</div></div><div style="display:flex;gap:10px"><div class="tm-chip"><div class="tm-dot"></div>tm prüft</div><button class="btn btn-p">+ Bescheid erfassen</button></div></div>
+      <div class="tm-info"><span style="font-size:18px">🔍</span><span><strong>taxmorrow</strong> gleicht jeden Bescheid mit der Steuererklärung ab, identifiziert Abweichungen und erstellt bei Bedarf einen begründeten Einspruchsentwurf.</span></div>
+      <div class="bs-sel">
+        <div class="bs-card active" onclick="selBescheid(this,'m')"><div class="bs-name">Müller, Hans-Peter</div><div class="bs-sub">ESt-Bescheid 2022 · 17.03.2026</div><div style="margin-top:8px"><span class="pill pill-r">⚠ Abweichung +1.240 €</span></div></div>
+        <div class="bs-card" onclick="selBescheid(this,'s')"><div class="bs-name">Schmidt GmbH</div><div class="bs-sub">KSt-Bescheid 2021 · 02.02.2026</div><div style="margin-top:8px"><span class="pill pill-y">⚠ Frist abgelaufen</span></div></div>
+        <div class="bs-card" onclick="selBescheid(this,'w')"><div class="bs-name">Weber Immobilien</div><div class="bs-sub">ESt-Bescheid 2022 · 10.01.2026</div><div style="margin-top:8px"><span class="pill pill-g">✓ Kein Einspruch</span></div></div>
+      </div>
+
+      <div id="bd-m">
+        <div class="delta-box"><div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gesamtabweichung</div><div class="delta-val">+ 1.240,00 €</div><div style="font-size:11.5px;color:var(--text3);margin-top:3px">Finanzamt setzt höhere Steuer fest — <strong style="color:var(--red)">Einspruch empfohlen</strong></div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px">Einspruchsfrist</div><div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--yellow)">17.04.2026</div><div style="font-size:10.5px;color:var(--text3)">noch 16 Tage</div></div></div>
+        <div class="bs-grid">
+          <div class="card" style="padding:18px 22px">
+            <div class="card-title" style="margin-bottom:14px">Positionsvergleich</div>
+            <div class="vgl-row hd"><div>Position</div><div style="text-align:right">Erklärt</div><div style="text-align:right">Bescheid</div><div style="text-align:right">Δ</div></div>
+            <div class="vgl-row"><div style="color:var(--text2)">Einkünfte Arbeitnehmer (§19)</div><div class="mono" style="color:var(--text2)">62.400 €</div><div class="mono" style="color:var(--text2)">62.400 €</div><div><span class="diff-b diff-0">±0</span></div></div>
+            <div class="vgl-row"><div style="color:var(--text2)">Werbungskosten</div><div class="mono" style="color:var(--green)">4.850 €</div><div class="mono" style="color:var(--red)">1.230 €</div><div><span class="diff-b diff-r">−3.620 €</span></div></div>
+            <div class="vgl-row"><div style="color:var(--text2)">Sonderausgaben (§10)</div><div class="mono" style="color:var(--text2)">2.680 €</div><div class="mono" style="color:var(--text2)">2.680 €</div><div><span class="diff-b diff-0">±0</span></div></div>
+            <div class="vgl-row"><div style="color:var(--text2)">Außergewöhnl. Belastungen</div><div class="mono" style="color:var(--green)">1.200 €</div><div class="mono" style="color:var(--red)">0 €</div><div><span class="diff-b diff-r">−1.200 €</span></div></div>
+            <div class="vgl-row"><div style="color:var(--text2)">Zu versteuerndes Einkommen</div><div class="mono" style="color:var(--green)">53.670 €</div><div class="mono" style="color:var(--red)">58.490 €</div><div><span class="diff-b diff-r">+4.820 €</span></div></div>
+            <div class="vgl-row" style="font-weight:600"><div style="color:var(--text)">Festgesetzte Steuer</div><div class="mono" style="color:var(--green);font-weight:700">14.280 €</div><div class="mono" style="color:var(--red);font-weight:700">15.520 €</div><div><span class="diff-b diff-r">+1.240 €</span></div></div>
+          </div>
+          <div class="card" style="padding:18px 22px">
+            <div class="card-title" style="margin-bottom:12px">tm Analyse</div>
+            <div class="analyse-box"><div class="analyse-lbl">Problem 1 · Werbungskosten</div><div class="analyse-text">FA hat Werbungskosten von <strong>4.850 €</strong> auf Pauschale <strong>1.230 €</strong> gekürzt. Homeoffice (210 Tage × 6 € = 1.260 €) und Fortbildungskosten (2.360 €) nicht anerkannt.</div></div>
+            <div class="analyse-box"><div class="analyse-lbl">Problem 2 · Außergewöhnliche Belastungen</div><div class="analyse-text">Pflegekosten <strong>1.200 €</strong> vollständig gestrichen. Zumutbare Belastung nach § 33 EStG möglicherweise falsch berechnet.</div></div>
+            <div class="analyse-box ok"><div class="analyse-lbl ok">tm Empfehlung</div><div class="analyse-text">Einspruch einlegen. Erfolgsaussichten: <strong style="color:var(--green)">hoch</strong>. Belege für Homeoffice und Fortbildung liegen vor.</div></div>
+          </div>
+        </div>
+        <div class="einspruch-wrap">
+          <div class="einspruch-title">⚖ Einspruchsentwurf — von tm generiert</div>
+          <div class="rg-list"><span class="rg">§ 9 EStG Werbungskosten</span><span class="rg">§ 4 Abs. 5 Nr. 6b EStG Homeoffice</span><span class="rg">§ 33 EStG Außergewöhnl. Belastungen</span><span class="rg">§ 347 AO Einspruch</span><span class="rg">§ 361 AO Aussetzung der Vollziehung</span></div>
+          <div class="einspruch-text">Hans-Peter Müller · Musterstraße 12 · 80331 München
+
+An das Finanzamt München I
+Deroystraße 18 · 80335 München
+
+München, 01.04.2026
+
+Einspruch gemäß § 347 AO
+gegen den Einkommensteuerbescheid 2022 vom 17.03.2026
+Steuer-Nr.: 143/892/75183
+
+Sehr geehrte Damen und Herren,
+
+gegen den oben genannten Bescheid lege ich fristgerecht Einspruch ein und beantrage die Aussetzung der Vollziehung gemäß § 361 AO hinsichtlich des strittigen Betrags von 1.240,00 €.
+
+I. WERBUNGSKOSTEN (§ 9 EStG)
+
+Das FA hat die erklärten Werbungskosten von 4.850,00 € auf die Arbeitnehmer-Pauschale von 1.230,00 € gekürzt. Dies ist unzutreffend:
+
+1. Homeoffice-Pauschale: Gemäß § 4 Abs. 5 S. 1 Nr. 6b EStG i.V.m. § 9 Abs. 5 EStG sind für 210 Arbeitstage je 6,00 € anzusetzen (= 1.260,00 €). Arbeitgeberbescheinigung liegt bei.
+
+2. Fortbildungskosten: Aufwendungen von 2.360,00 € für die Weiterbildung „Projektmanagement IHK" stehen in unmittelbarem Zusammenhang mit der beruflichen Tätigkeit (Nachweise anbei).
+
+II. AUSSERGEWÖHNLICHE BELASTUNGEN (§ 33 EStG)
+
+Pflegekosten von 1.200,00 € wurden ohne Begründung nicht anerkannt. Bei GdE 53.670 € und Familienstand ledig beträgt die zumutbare Belastung 5 % = 2.684 €. Unter Einbeziehung aller außergewöhnlichen Belastungen ist der Abzug anteilig zu gewähren.
+
+III. ANTRAG
+
+Ich beantrage, den Bescheid dahingehend zu ändern, dass
+– die Werbungskosten mit 4.850,00 € angesetzt werden,
+– die außergewöhnlichen Belastungen mit 1.200,00 € berücksichtigt werden,
+– die Einkommensteuer auf 14.280,00 € herabgesetzt wird.
+
+Mit freundlichen Grüßen
+Hans-Peter Müller
+(bevollmächtigt: taxmorrow Steuerberatung)</div>
+          <div style="display:flex;gap:10px;margin-top:12px">
+            <button class="btn btn-p">Einspruch übernehmen</button>
+            <button class="btn btn-g">Bearbeiten</button>
+            <button class="btn btn-g">Als PDF exportieren</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="bd-s" style="display:none">
+        <div class="delta-box"><div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gesamtabweichung</div><div class="delta-val">+ 380,00 €</div><div style="font-size:11.5px;color:var(--text3);margin-top:3px"><strong style="color:var(--yellow)">Einspruchsfrist abgelaufen</strong></div></div><div style="text-align:right"><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);margin-bottom:3px">Einspruchsfrist</div><div style="font-family:'DM Serif Display',serif;font-size:20px;color:var(--red)">02.03.2026</div><div style="font-size:10.5px;color:var(--red)">abgelaufen</div></div></div>
+        <div class="card" style="padding:18px 22px"><div style="font-size:13px;color:var(--text2)">Einspruchsfrist ist abgelaufen. Abweichung betrifft nicht anerkannte Bewirtungskosten (380 €). Empfehlung: Für Folgejahre lückenlose Bewirtungsbelege gemäß § 4 Abs. 5 Nr. 2 EStG dokumentieren.</div></div>
+      </div>
+
+      <div id="bd-w" style="display:none">
+        <div class="delta-box ok"><div><div style="font-family:'DM Mono',monospace;font-size:9px;color:var(--text3);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Gesamtabweichung</div><div class="delta-val ok">± 0,00 €</div><div style="font-size:11.5px;color:var(--text3);margin-top:3px"><strong style="color:var(--green)">Kein Handlungsbedarf</strong></div></div></div>
+        <div class="card" style="padding:18px 22px"><div style="font-size:13px;color:var(--green)">✓ Alle Positionen wurden erklärungsgemäß festgesetzt. Kein Einspruch erforderlich.</div></div>
+      </div>
+    </div>
+
+    <!-- TM BERATER -->
+    <div class="view" id="view-berater">
+      <div class="section-hd"><div><div class="section-title">tm Berater</div><div class="section-sub">KI-gestützte Beratungsfälle, Planungen & Gutachten</div></div><div class="tm-chip"><div class="tm-dot"></div>Claude · tm</div></div>
+      <div class="berater-wrap">
+        <div class="b-left">
+          <div class="b-panel">
+            <div class="b-panel-h">Mandant wählen</div>
+            <div class="mp-item on" onclick="pickM(this,'mueller')"><div class="mp-dot"></div>Müller, Hans-Peter</div>
+            <div class="mp-item" onclick="pickM(this,'schmidt')"><div class="mp-dot"></div>Schmidt GmbH</div>
+            <div class="mp-item" onclick="pickM(this,'bauer')"><div class="mp-dot"></div>Bauer & Partner KG</div>
+            <div class="mp-item" onclick="pickM(this,'weber')"><div class="mp-dot"></div>Weber Immobilien</div>
+            <div class="mp-item" onclick="pickM(this,'fischer')"><div class="mp-dot"></div>Fischer, Eva</div>
+          </div>
+          <div class="b-panel">
+            <div class="b-panel-h">Falltyp</div>
+            <div class="ft-item on" onclick="pickF(this,'beratung')">💬 Allg. Beratungsfall</div>
+            <div class="ft-item" onclick="pickF(this,'planung')">📊 Steuerplanung</div>
+            <div class="ft-item" onclick="pickF(this,'gutachten')">📝 Gutachten</div>
+            <div class="ft-item" onclick="pickF(this,'umstrukturierung')">🔄 Umstrukturierung</div>
+            <div class="ft-item" onclick="pickF(this,'erbschaft')">⚖ Erbschaft / Nachfolge</div>
+            <div class="ft-item" onclick="pickF(this,'betriebspruefung')">🔍 Betriebsprüfung</div>
+          </div>
+          <div class="sd-box" id="sdBox">
+            <span class="sd-title">Stammdaten — Müller, H.-P.</span>
+            <div class="sd-row"><span class="sd-k">Typ</span><span class="sd-v">Privatperson</span></div>
+            <div class="sd-row"><span class="sd-k">Steuer-ID</span><span class="sd-v">43 892 751 839</span></div>
+            <div class="sd-row"><span class="sd-k">Finanzamt</span><span class="sd-v">München I</span></div>
+            <div class="sd-row"><span class="sd-k">GdE 2023</span><span class="sd-v">53.670 €</span></div>
+            <div class="sd-row"><span class="sd-k">Leistung</span><span class="sd-v">ESt-Erklärung</span></div>
+          </div>
+        </div>
+        <div class="chat-wrap">
+          <div class="chat-h">
+            <div class="cav cav-tm">tm</div>
+            <div class="chat-title">tm Berater</div>
+            <div style="margin-left:auto;display:flex;gap:8px">
+              <button class="btn btn-g" style="font-size:11.5px;padding:5px 11px" onclick="clearChat()">Neu</button>
+              <button class="btn btn-g" style="font-size:11.5px;padding:5px 11px" onclick="exportChat()">Export</button>
+            </div>
+          </div>
+          <div class="chat-fall" id="fallLabel">Beratungsfall · Müller, Hans-Peter</div>
+          <div class="chat-msgs" id="chatMsgs"></div>
+          <div class="qprompts" id="qPrompts">
+            <button class="qp" onclick="qSend(this)">Steuerbelastung optimieren</button>
+            <button class="qp" onclick="qSend(this)">Vorsorgeaufwendungen prüfen</button>
+            <button class="qp" onclick="qSend(this)">Einspruch begründen</button>
+            <button class="qp" onclick="qSend(this)">Gutachten Werbungskosten</button>
+            <button class="qp" onclick="qSend(this)">Steuerplanung 2025/2026</button>
+          </div>
+          <div class="chat-in">
+            <textarea class="chat-textarea" id="chatIn" placeholder="Frage stellen oder Auftrag erteilen…" onkeydown="chatKey(event)" oninput="aResize(this)"></textarea>
+            <button class="send-btn" id="sendBtn" onclick="sendMsg()">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- POSTEINGANG -->
+    <div class="view" id="view-posteingang">
+      <div class="section-hd"><div><div class="section-title">Posteingang</div><div class="section-sub">7 ungelesene Nachrichten</div></div><div style="display:flex;gap:10px"><div class="tm-chip"><div class="tm-dot"></div>tm kategorisiert</div><button class="btn btn-g">Alle gelesen</button></div></div>
+      <div class="tm-info"><span style="font-size:18px">✦</span><span><strong>taxmorrow</strong> kategorisiert eingehende Post und ordnet sie automatisch Mandanten zu.</span></div>
+      <div class="ftabs"><div class="ftab active">Alle (12)</div><div class="ftab">Ungelesen (7)</div><div class="ftab">Bescheide</div><div class="ftab">Belege</div></div>
+      <div class="card">
+        <div class="post-item unread"><div class="post-icon">📄</div><div style="flex:1"><div class="post-from">Finanzamt München I</div><div class="post-sub">Einkommensteuerbescheid 2022 — Müller, H.-P.</div><div class="post-prev">Bescheid 17.03.2026 · Nachzahlung 1.240 € · tm: Einspruchsfrist prüfen</div></div><div class="post-meta"><div class="post-time">heute 09:14</div><div class="post-dot"></div></div></div>
+        <div class="post-item unread"><div class="post-icon">📁</div><div style="flex:1"><div class="post-from">Schmidt GmbH</div><div class="post-sub">Belege Februar 2026 hochgeladen</div><div class="post-prev">23 Dokumente · tm: Buchungsvorbereitung gestartet</div></div><div class="post-meta"><div class="post-time">heute 08:43</div><div class="post-dot"></div></div></div>
+        <div class="post-item unread"><div class="post-icon">❓</div><div style="flex:1"><div class="post-from">Fischer, Eva</div><div class="post-sub">Frage: Welche Unterlagen brauchen Sie?</div><div class="post-prev">Hallo, ich bin neu… · tm: Checkliste Erstmandat vorbereitet</div></div><div class="post-meta"><div class="post-time">gestern 16:22</div><div class="post-dot"></div></div></div>
+        <div class="post-item unread"><div class="post-icon">📋</div><div style="flex:1"><div class="post-from">Finanzamt München II</div><div class="post-sub">Umsatzsteuersonderprüfung — Koch Restaurant OHG</div><div class="post-prev">Prüfung 14.04.2026 · tm: Frist angelegt, Priorität Hoch</div></div><div class="post-meta"><div class="post-time">gestern 11:05</div><div class="post-dot"></div></div></div>
+        <div class="post-item"><div class="post-icon">✅</div><div style="flex:1"><div class="post-from r">Bauer & Partner KG</div><div class="post-sub">Jahresabschluss 2023 — Freigabe erteilt</div><div class="post-prev">Wir geben hiermit den Jahresabschluss zur Einreichung frei…</div></div><div class="post-meta"><div class="post-time">16.03.</div></div></div>
+        <div class="post-item"><div class="post-icon">💶</div><div style="flex:1"><div class="post-from r">Weber Immobilien</div><div class="post-sub">Zahlungseingang Honorarrechnung Jan. 2026</div><div class="post-prev">Betrag 2.400 € · Eingang 15.03.2026</div></div><div class="post-meta"><div class="post-time">15.03.</div></div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── NAV ──────────────────────────────────────────────
+const TITLES = {dashboard:'Dashboard',mandanten:'Mandanten',aufnahme:'Neuaufnahme',steuer:'Steuererklärungen',checklisten:'Checklisten',fristen:'Fristenüberwachung',bescheid:'Bescheidprüfung',berater:'tm Berater',posteingang:'Posteingang'};
+
+function go(name, el) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const view = document.getElementById('view-' + name);
+  if (view) view.classList.add('active');
+  document.getElementById('pageTitle').textContent = TITLES[name] || name;
+  if (el) el.classList.add('active');
+}
+
+// ── DATE ─────────────────────────────────────────────
+document.getElementById('topDate').textContent = new Intl.DateTimeFormat('de-DE',{weekday:'long',year:'numeric',month:'long',day:'numeric'}).format(new Date());
+
+// ── FILTER TABS ───────────────────────────────────────
+document.querySelectorAll('.ftabs').forEach(g => {
+  g.querySelectorAll('.ftab').forEach(t => {
+    t.addEventListener('click', () => {
+      g.querySelectorAll('.ftab').forEach(x => x.classList.remove('active'));
+      t.classList.add('active');
+    });
+  });
+});
+
+// ── CHECKLISTEN ───────────────────────────────────────
+function ck(item) {
+  item.querySelector('.cbox').classList.toggle('on');
+  item.querySelector('.ck-label').classList.toggle('done');
+}
+
+// ── BESCHEID ──────────────────────────────────────────
+function selBescheid(el, which) {
+  document.querySelectorAll('.bs-card').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  ['m','s','w'].forEach(id => {
+    const d = document.getElementById('bd-' + id);
+    if (d) d.style.display = (id === which) ? '' : 'none';
+  });
+}
+
+// ── BERATER BOT ───────────────────────────────────────
+const MANDANTEN = {
+  mueller: { name:'Müller, Hans-Peter', typ:'Privatperson', id:'43 892 751 839', fa:'München I', gde:'53.670 €', leistung:'ESt-Erklärung', extra:'ESt 2021–2023 vorhanden. Offener Einspruch ESt 2022 (+1.240 €). Werbungskosten 4.850 € (Homeoffice 210 Tage, Fortbildung IHK). Außergewöhnliche Belastungen 1.200 € (Pflegekosten). Lohnsteuerbescheinigung 2023 liegt vor.' },
+  schmidt: { name:'Schmidt GmbH', typ:'GmbH', id:'DE 234 891 002', fa:'München II', gde:'Umsatz 1,4 Mio € (2023)', leistung:'Vollmandat', extra:'KSt-Bescheid 2021 Abweichung 380 € (Bewirtungskosten). JA 2023 in Bearbeitung. USt-Sonderprüfung angekündigt 14.04.2026. 12 Mitarbeiter.' },
+  bauer: { name:'Bauer & Partner KG', typ:'KG', id:'DE 109 334 781', fa:'München III', gde:'Gewinn 280.000 € (2023)', leistung:'KSt + JA', extra:'JA 2023 freigegeben. 3 Gesellschafter (40/35/25%). Mögliche Umstrukturierung zur GmbH diskutiert. Gewerbesteuer-Hebesatz 490%.' },
+  weber: { name:'Weber Immobilien', typ:'GmbH & Co. KG', id:'DE 445 221 907', fa:'München I', gde:'Mieteinnahmen 420.000 €', leistung:'Vollmandat', extra:'ESt-Bescheid 2022 erklärungsgemäß. 8 Wohnobjekte, davon 2 gewerblich. AfA-Optimierung möglich. Grundstückskauf geplant 2026.' },
+  fischer: { name:'Fischer, Eva', typ:'Privatperson', id:'12 334 002 891', fa:'München IV', gde:'ca. 38.000 € (Schätzung)', leistung:'ESt-Erklärung', extra:'Neu-Mandantin. Erstmandat. Freiberufliche Tätigkeit (anteilig, Grafikdesign). Vorjahresbescheid noch ausstehend.' }
+};
+const FALLTYPEN = { beratung:'Allg. Beratungsfall', planung:'Steuerplanung', gutachten:'Gutachten', umstrukturierung:'Umstrukturierung', erbschaft:'Erbschaft / Nachfolge', betriebspruefung:'Betriebsprüfung' };
+
+let curM = 'mueller', curF = 'beratung', history = [];
+
+function pickM(el, which) {
+  document.querySelectorAll('.mp-item').forEach(i => i.classList.remove('on'));
+  el.classList.add('on');
+  curM = which;
+  const d = MANDANTEN[which];
+  document.getElementById('sdBox').innerHTML = `<span class="sd-title">Stammdaten — ${d.name}</span>
+    <div class="sd-row"><span class="sd-k">Typ</span><span class="sd-v">${d.typ}</span></div>
+    <div class="sd-row"><span class="sd-k">Steuer-ID</span><span class="sd-v">${d.id}</span></div>
+    <div class="sd-row"><span class="sd-k">Finanzamt</span><span class="sd-v">${d.fa}</span></div>
+    <div class="sd-row"><span class="sd-k">GdE / Umsatz</span><span class="sd-v">${d.gde}</span></div>
+    <div class="sd-row"><span class="sd-k">Leistung</span><span class="sd-v">${d.leistung}</span></div>`;
+  updateLabel(); clearChat();
+}
+
+function pickF(el, which) {
+  document.querySelectorAll('.ft-item').forEach(i => i.classList.remove('on'));
+  el.classList.add('on');
+  curF = which;
+  updateLabel(); clearChat();
+}
+
+function updateLabel() {
+  document.getElementById('fallLabel').textContent = FALLTYPEN[curF] + ' · ' + MANDANTEN[curM].name;
+}
+
+function clearChat() {
+  history = [];
+  const d = MANDANTEN[curM];
+  document.getElementById('chatMsgs').innerHTML = '';
+  addMsg('tm', `Guten Tag. Ich bin <strong>tm</strong>, Ihr KI-Berater.<br><br>Für <strong>${d.name}</strong> liegen mir folgende Informationen vor:<br>${d.extra}<br><br>Was soll ich erarbeiten? Ich kann einen Beratungsfall dokumentieren, eine Steuerplanung erstellen, ein Gutachten formulieren oder Risiken analysieren.`);
+  document.getElementById('qPrompts').style.display = '';
+}
+
+function addMsg(role, html) {
+  const c = document.getElementById('chatMsgs');
+  const div = document.createElement('div');
+  div.className = 'cmsg' + (role === 'user' ? ' u' : '');
+  const av = role === 'tm' ? '<div class="cav cav-tm">tm</div>' : '<div class="cav cav-u">👤</div>';
+  div.innerHTML = av + `<div class="cbubble">${html}</div>`;
+  c.appendChild(div);
+  c.scrollTop = c.scrollHeight;
+}
+
+async function sendMsg() {
+  const inp = document.getElementById('chatIn');
+  const txt = inp.value.trim();
+  if (!txt) return;
+  inp.value = ''; aResize(inp);
+  addMsg('user', txt.replace(/&/g,'&amp;').replace(/</g,'&lt;'));
+  history.push({ role:'user', content: txt });
+  document.getElementById('qPrompts').style.display = 'none';
+  document.getElementById('sendBtn').disabled = true;
+
+  // typing indicator
+  const c = document.getElementById('chatMsgs');
+  const ti = document.createElement('div');
+  ti.className = 'cmsg'; ti.id = 'ti';
+  ti.innerHTML = '<div class="cav cav-tm">tm</div><div class="cbubble"><span class="tdot"></span><span class="tdot"></span><span class="tdot"></span></div>';
+  c.appendChild(ti); c.scrollTop = c.scrollHeight;
+
+  const d = MANDANTEN[curM];
+  const sys = `Du bist tm, KI-Steuerberater der Kanzlei taxmorrow. Antworte auf Deutsch, präzise, fachlich korrekt. Zitiere relevante Paragraphen (EStG, AO, UStG, KStG). Bei Gutachten: Sachverhalt, rechtliche Würdigung, Ergebnis. Bei Planung: konkrete Zahlen und Optimierungspotenziale. Nutze **fett** für wichtige Begriffe.
+
+MANDANT: ${d.name} | ${d.typ} | FA: ${d.fa} | GdE/Umsatz: ${d.gde} | Leistung: ${d.leistung}
+DATEN: ${d.extra}
+FALLTYP: ${FALLTYPEN[curF]}`;
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ model:'claude-sonnet-4-20250514', max_tokens:1000, system:sys, messages:history })
+    });
+    const data = await resp.json();
+    const reply = (data.content||[]).map(b=>b.text||'').join('') || 'Keine Antwort erhalten.';
+    history.push({ role:'assistant', content:reply });
+    document.getElementById('ti')?.remove();
+    const formatted = reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    addMsg('tm', formatted);
+  } catch(e) {
+    document.getElementById('ti')?.remove();
+    addMsg('tm','Verbindungsfehler. Bitte erneut versuchen.');
+  }
+  document.getElementById('sendBtn').disabled = false;
+}
+
+function qSend(btn) { document.getElementById('chatIn').value = btn.textContent; sendMsg(); }
+function chatKey(e) { if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendMsg();} }
+function aResize(el) { el.style.height='auto'; el.style.height=Math.min(el.scrollHeight,110)+'px'; }
+function exportChat() {
+  const msgs = document.querySelectorAll('#chatMsgs .cbubble');
+  let txt = `tm Berater Export · ${new Date().toLocaleDateString('de-DE')}\nMandant: ${MANDANTEN[curM].name}\nFall: ${FALLTYPEN[curF]}\n\n`;
+  msgs.forEach((m,i) => { txt += (i%2===0?'tm: ':'Sie: ') + m.innerText + '\n\n'; });
+  const a = document.createElement('a');
+  a.href = 'data:text/plain;charset=utf-8,' + encodeURIComponent(txt);
+  a.download = `tm-berater-${curM}.txt`;
+  a.click();
+}
+
+// Init
+clearChat();
+</script>
+</body>
+</html>
